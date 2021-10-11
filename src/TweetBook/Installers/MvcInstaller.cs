@@ -63,6 +63,8 @@ namespace TweetBook.Installers
                     .AddFluentValidation(options => options.RegisterValidatorsFromAssemblyContaining<Startup>());
 
             services.AddAutoMapper(typeof(Startup));
+
+            services.AddHealthChecks().AddSqlServer(configuration.GetConnectionString("DefaultConnection"));
         }
     }
 }
