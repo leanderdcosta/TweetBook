@@ -8,9 +8,11 @@ using System.Linq;
 using System.Threading.Tasks;
 using TweetBook.Contracts.V1;
 using TweetBook.Contracts.V1.Requests;
+using TweetBook.Contracts.V1.Requests.Queries;
 using TweetBook.Contracts.V1.Responses;
 using TweetBook.Domain;
 using TweetBook.Extensions;
+using TweetBook.Helpers;
 using TweetBook.Services;
 
 namespace TweetBook.Controllers.V1
@@ -20,22 +22,33 @@ namespace TweetBook.Controllers.V1
     {
         private readonly IPostService _postService;
         private readonly IMapper _mapper;
+        private readonly IUriService _uriService;
 
-        public PostsController(IPostService postService, IMapper mapper)
+        public PostsController(IPostService postService, IMapper mapper, IUriService uriService)
         {
             _postService = postService;
             _mapper = mapper;
+            _uriService = uriService;
         }
 
         [AllowAnonymous]
         [HttpGet(ApiRoutes.Posts.GetAll)]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetAll([FromQuery] PaginationQuery paginationQuery)
         {
-            var posts = await _postService.GetPostsAsync();
-            
-            var response = _mapper.Map<List<PostResponse>>(posts);
+            var pagination = _mapper.Map<PaginationFilter>(paginationQuery);
 
-            return Ok(response);
+            var posts = await _postService.GetPostsAsync(pagination);
+
+            var postResponse = _mapper.Map<List<PostResponse>>(posts);
+
+            if (pagination == null || pagination.PageNumber < 1 || pagination.PageSize < 1)
+            {
+                return Ok(new PagedResponse<PostResponse>(postResponse));
+            }
+
+            var pagedResponse = PaginationHelpers.CreatePaginatedResponse(_uriService, pagination, postResponse);
+
+            return Ok(pagedResponse);
         }
 
         [AllowAnonymous]
@@ -67,8 +80,7 @@ namespace TweetBook.Controllers.V1
 
             await _postService.CreateAsync(post);
 
-            var baseUrl = $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host.ToUriComponent()}";
-            var uri = baseUrl + "/" + ApiRoutes.Posts.Get.Replace("{postId}", post.Id.ToString());
+            var uri = _uriService.GetPostUri(post.Id.ToString());
 
             var response = _mapper.Map<PostResponse>(post);
 

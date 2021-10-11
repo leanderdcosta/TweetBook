@@ -1,6 +1,7 @@
 ﻿using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
@@ -69,6 +70,15 @@ namespace TweetBook.Installers
                 .AddSqlServer(configuration.GetConnectionString("DefaultConnection"),
                                 timeout: TimeSpan.FromSeconds(5),
                                 tags: new[] { "ready" });
+
+            services.AddSingleton<IUriService>(p =>
+            {
+                var accessor = p.GetRequiredService<IHttpContextAccessor>();
+                var request = accessor.HttpContext.Request;
+                var absoluteUri = string.Concat(request.Scheme, "://", request.Host.ToUriComponent(), "/");
+
+                return new UriService(absoluteUri);
+            });
         }
     }
 }
