@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using System;
 using System.Text;
 using TweetBook.Authorization;
 using TweetBook.Filters;
@@ -64,7 +65,10 @@ namespace TweetBook.Installers
 
             services.AddAutoMapper(typeof(Startup));
 
-            services.AddHealthChecks().AddSqlServer(configuration.GetConnectionString("DefaultConnection"));
+            services.AddHealthChecks()
+                .AddSqlServer(configuration.GetConnectionString("DefaultConnection"),
+                                timeout: TimeSpan.FromSeconds(5),
+                                tags: new[] { "ready" });
         }
     }
 }
