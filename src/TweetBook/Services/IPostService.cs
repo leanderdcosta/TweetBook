@@ -7,7 +7,7 @@ namespace TweetBook.Services
 {
     public interface IPostService
     {
-        Task<List<Post>> GetPostsAsync(PaginationFilter paginationFilter = null);
+        Task<List<Post>> GetPostsAsync(GetAllPostsFilter filter = null, PaginationFilter pagination = null);
         Task<Post> GetPostByIdAsync(Guid postId);
         Task<bool> CreateAsync(Post post);
         Task<bool> UpdatePostAsync(Post post);
